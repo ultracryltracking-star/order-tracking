@@ -414,7 +414,7 @@
         }
 
         function showOrderDetails(order) {
-            const status = order.shipped === 1 ? 'Shipped' : 'Pending';
+            const status = order.shipped === 1 ? 'Shipped on/before' : 'Pending';
             const date = order.dateShipped ? ` on ${order.dateShipped}` : '';
             alert(`Order: ${order.orderNumber}\nStatus: ${status}${date}`);
         }
