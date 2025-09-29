@@ -288,34 +288,50 @@
         let ordersData = [];
 
         function loadDataFromGoogleSheet() {
+            console.log('Loading data from:', SHEET_URL);
             fetch(SHEET_URL)
-                .then(response => response.text())
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.text();
+                })
                 .then(data => {
+                    console.log('Raw CSV data received:', data.substring(0, 200));
                     ordersData = parseCSV(data);
+                    console.log('Total pledges loaded:', ordersData.length);
                     updateDashboard();
                 })
                 .catch(error => {
                     console.error('Error loading data:', error);
-                    // Fall back to empty data
+                    alert('Error loading pledge data. Please check the Google Sheet URL.');
                     updateDashboard();
                 });
         }
 
         function parseCSV(csvText) {
-            const lines = csvText.split('\n');
-            const headers = lines[0].split(',');
+            const lines = csvText.trim().split('\n');
             const data = [];
             
+            // Skip header row (index 0)
             for (let i = 1; i < lines.length; i++) {
-                if (lines[i].trim()) {
-                    const values = lines[i].split(',');
-                    data.push({
-                        orderNumber: values[0]?.trim(),
-                        shipped: parseInt(values[1]?.trim()) || 0,
-                        dateShipped: values[2]?.trim() || ''
-                    });
+                const line = lines[i].trim();
+                if (line) {
+                    // Split by comma, handling potential quotes
+                    const values = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || line.split(',');
+                    
+                    const orderNum = values[0]?.replace(/"/g, '').trim();
+                    const shippedVal = values[1]?.replace(/"/g, '').trim();
+                    const dateVal = values[2]?.replace(/"/g, '').trim();
+                    
+                    if (orderNum) {
+                        data.push({
+                            orderNumber: orderNum,
+                            shipped: parseInt(shippedVal) || 0,
+                            dateShipped: dateVal || ''
+                        });
+                    }
                 }
             }
+            console.log('Parsed data:', data.length, 'pledges');
             return data;
         }
 
@@ -329,15 +345,17 @@
             const shipped = ordersData.filter(order => order.shipped === 1).length;
             const pending = total - shipped;
             
-            // Find last shipped order
+            // Find last shipped order by date, then by order number
             const shippedOrders = ordersData
                 .filter(order => order.shipped === 1 && order.dateShipped)
                 .sort((a, b) => {
-                    // First sort by date
-                    const dateCompare = new Date(b.dateShipped) - new Date(a.dateShipped);
+                    // First sort by date (LATEST date first)
+                    const dateA = new Date(a.dateShipped);
+                    const dateB = new Date(b.dateShipped);
+                    const dateCompare = dateB - dateA; // Latest date first
                     if (dateCompare !== 0) return dateCompare;
                     
-                    // If dates are equal, sort by order number (extract numeric part)
+                    // If dates are equal, sort by order number (highest first)
                     const aNum = parseInt(a.orderNumber.replace(/\D/g, '')) || 0;
                     const bNum = parseInt(b.orderNumber.replace(/\D/g, '')) || 0;
                     return bNum - aNum;
