@@ -357,7 +357,16 @@
             // Find last shipped order
             const shippedOrders = ordersData
                 .filter(order => order.shipped === 1 && order.dateShipped)
-                .sort((a, b) => new Date(b.dateShipped) - new Date(a.dateShipped));
+                .sort((a, b) => {
+                    // First sort by date
+                    const dateCompare = new Date(b.dateShipped) - new Date(a.dateShipped);
+                    if (dateCompare !== 0) return dateCompare;
+                    
+                    // If dates are equal, sort by order number (extract numeric part)
+                    const aNum = parseInt(a.orderNumber.replace(/\D/g, '')) || 0;
+                    const bNum = parseInt(b.orderNumber.replace(/\D/g, '')) || 0;
+                    return bNum - aNum;
+                });
             
             const lastShipped = shippedOrders.length > 0 ? shippedOrders[0].orderNumber : 'None';
 
