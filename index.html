@@ -32,6 +32,15 @@
             color: white;
             padding: 30px;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .header-logo {
+            max-width: 200px;
+            height: auto;
         }
         
         .header h1 {
@@ -149,9 +158,11 @@
         
         .heatmap {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-            gap: 8px;
+            grid-template-columns: repeat(50, 1fr);
+            gap: 2px;
             margin-bottom: 20px;
+            max-width: 100%;
+            overflow-x: auto;
         }
         
         .order-cell {
@@ -159,25 +170,41 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 12px;
+            border-radius: 2px;
+            font-size: 0;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: transform 0.2s, z-index 0.2s;
+            position: relative;
         }
         
         .order-cell:hover {
-            transform: scale(1.1);
+            transform: scale(2);
+            z-index: 10;
+            border: 2px solid #333;
         }
         
         .order-cell.shipped {
-            background: #28a745;
-            color: white;
+            background: #6fa8dc;
         }
         
         .order-cell.pending {
-            background: #ffc107;
-            color: #333;
+            background: #e06666;
+        }
+        
+        .order-cell:hover::after {
+            content: attr(data-order);
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            white-space: nowrap;
+            margin-top: 4px;
+            z-index: 20;
         }
         
         .legend {
@@ -226,6 +253,7 @@
 <body>
     <div class="container">
         <div class="header">
+            <img src="https://www.ten01.org/web/image/website/1/logo/ten01?unique=0175abc" alt="ten01 Logo" class="header-logo">
             <h1>📦 Order Tracking Dashboard</h1>
             <p>Track your orders in real-time</p>
         </div>
@@ -264,33 +292,17 @@
                 <div class="heatmap" id="heatmap"></div>
                 <div class="legend">
                     <div class="legend-item">
-                        <div class="legend-color shipped"></div>
+                        <div class="legend-color shipped" style="background: #6fa8dc;"></div>
                         <span>Shipped</span>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-color pending"></div>
-                        <span>Pending</span>
+                        <div class="legend-color pending" style="background: #e06666;"></div>
+                        <span>Not Shipped</span>
                     </div>
                 </div>
             </div>
             
-            <div class="data-input-section">
-                <h3>📝 Data Setup Instructions</h3>
-                <p>To connect this dashboard to your Google Sheet:</p>
-                <ol style="margin: 15px 0; padding-left: 20px;">
-                    <li>Create a Google Sheet with these exact column headers in row 1:</li>
-                </ol>
-                <div class="sample-data">Order Number | Shipped | Date Shipped
-ORD-001 | 1 | 2024-01-15
-ORD-002 | 0 | 
-ORD-003 | 1 | 2024-01-16</div>
-                <ol start="2" style="margin: 15px 0; padding-left: 20px;">
-                    <li>Publish your sheet to the web (File → Share → Publish to web)</li>
-                    <li>Copy the published URL and update the SHEET_URL variable in the code</li>
-                    <li>Use 1 for shipped orders, 0 for pending orders</li>
-                    <li>Leave Date Shipped blank for pending orders</li>
-                </ol>
-            </div>
+
         </div>
     </div>
 
@@ -298,23 +310,9 @@ ORD-003 | 1 | 2024-01-16</div>
         // Replace this URL with your published Google Sheet URL
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRtw_KCwaCXXgeH7FhKFaoGts3Pt-nDuo8LD2YdhHJz1fMyZbcmtwD6RqjSs40xGlAs0AgkR5X7qJsZ/pub?output=csv';
         
-        // Sample data for demonstration
-        let ordersData = [
-            { orderNumber: 'ORD-001', shipped: 1, dateShipped: '2024-01-15' },
-            { orderNumber: 'ORD-002', shipped: 0, dateShipped: '' },
-            { orderNumber: 'ORD-003', shipped: 1, dateShipped: '2024-01-16' },
-            { orderNumber: 'ORD-004', shipped: 0, dateShipped: '' },
-            { orderNumber: 'ORD-005', shipped: 1, dateShipped: '2024-01-17' },
-            { orderNumber: 'ORD-006', shipped: 0, dateShipped: '' },
-            { orderNumber: 'ORD-007', shipped: 1, dateShipped: '2024-01-18' },
-            { orderNumber: 'ORD-008', shipped: 0, dateShipped: '' },
-            { orderNumber: 'ORD-009', shipped: 1, dateShipped: '2024-01-19' },
-            { orderNumber: 'ORD-010', shipped: 0, dateShipped: '' },
-        ];
+        let ordersData = [];
 
         function loadDataFromGoogleSheet() {
-            // When you have a real Google Sheet URL, uncomment this section:
-            /*
             fetch(SHEET_URL)
                 .then(response => response.text())
                 .then(data => {
@@ -326,10 +324,6 @@ ORD-003 | 1 | 2024-01-16</div>
                     // Fall back to sample data
                     updateDashboard();
                 });
-            */
-            
-            // For now, use sample data
-            updateDashboard();
         }
 
         function parseCSV(csvText) {
@@ -380,7 +374,7 @@ ORD-003 | 1 | 2024-01-16</div>
             ordersData.forEach(order => {
                 const cell = document.createElement('div');
                 cell.className = `order-cell ${order.shipped === 1 ? 'shipped' : 'pending'}`;
-                cell.textContent = order.orderNumber.replace('ORD-', '');
+                cell.setAttribute('data-order', order.orderNumber);
                 cell.title = `${order.orderNumber} - ${order.shipped === 1 ? 'Shipped' : 'Pending'}`;
                 cell.onclick = () => showOrderDetails(order);
                 heatmap.appendChild(cell);
