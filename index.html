@@ -407,9 +407,9 @@
             }
 
             if (order.shipped === 1) {
-                resultDiv.innerHTML = `<div class="result shipped">✅ Order ${order.orderNumber} has been shipped! Date: ${order.dateShipped}</div>`;
+                resultDiv.innerHTML = `<div class="result shipped">✅ Order ${order.orderNumber} has been shipped on or before Date: ${order.dateShipped}</div>`;
             } else {
-                resultDiv.innerHTML = `<div class="result pending">📦 Order ${order.orderNumber} is being prepared for shipment</div>`;
+                resultDiv.innerHTML = `<div class="result pending">📦 Order ${order.orderNumber} has not yet shipped.</div>`;
             }
         }
 
