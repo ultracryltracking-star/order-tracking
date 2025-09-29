@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Tracking Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .dashboard {
+            padding: 30px;
+        }
+        
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 5px solid #4facfe;
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .search-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .search-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .search-form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .search-btn {
+            padding: 12px 25px;
+            background: #4facfe;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        
+        .search-btn:hover {
+            background: #357abd;
+        }
+        
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        
+        .result.shipped {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .result.pending {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .result.not-found {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .heatmap-section h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .heatmap {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .order-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .order-cell:hover {
+            transform: scale(1.1);
+        }
+        
+        .order-cell.shipped {
+            background: #28a745;
+            color: white;
+        }
+        
+        .order-cell.pending {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+        
+        .data-input-section {
+            background: #e9f7ff;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 30px;
+            border-left: 5px solid #4facfe;
+        }
+        
+        .data-input-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .sample-data {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-line;
+            border: 1px solid #ddd;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 Order Tracking Dashboard</h1>
+            <p>Track your orders in real-time</p>
+        </div>
+        
+        <div class="dashboard">
+            <div class="stats-section">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalOrders">0</div>
+                    <div class="stat-label">Total Orders</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="shippedOrders">0</div>
+                    <div class="stat-label">Orders Shipped</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="pendingOrders">0</div>
+                    <div class="stat-label">Pending Orders</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="lastShipped">None</div>
+                    <div class="stat-label">Last Order Shipped</div>
+                </div>
+            </div>
+            
+            <div class="search-section">
+                <h3>🔍 Check Your Order Status</h3>
+                <div class="search-form">
+                    <input type="text" class="search-input" id="orderInput" placeholder="Enter your order number (e.g., ORD-001)">
+                    <button class="search-btn" onclick="searchOrder()">Check Status</button>
+                </div>
+                <div id="searchResult"></div>
+            </div>
+            
+            <div class="heatmap-section">
+                <h3>📊 Order Status Heatmap</h3>
+                <div class="heatmap" id="heatmap"></div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color shipped"></div>
+                        <span>Shipped</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color pending"></div>
+                        <span>Pending</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="data-input-section">
+                <h3>📝 Data Setup Instructions</h3>
+                <p>To connect this dashboard to your Google Sheet:</p>
+                <ol style="margin: 15px 0; padding-left: 20px;">
+                    <li>Create a Google Sheet with these exact column headers in row 1:</li>
+                </ol>
+                <div class="sample-data">Order Number | Shipped | Date Shipped
+ORD-001 | 1 | 2024-01-15
+ORD-002 | 0 | 
+ORD-003 | 1 | 2024-01-16</div>
+                <ol start="2" style="margin: 15px 0; padding-left: 20px;">
+                    <li>Publish your sheet to the web (File → Share → Publish to web)</li>
+                    <li>Copy the published URL and update the SHEET_URL variable in the code</li>
+                    <li>Use 1 for shipped orders, 0 for pending orders</li>
+                    <li>Leave Date Shipped blank for pending orders</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Replace this URL with your published Google Sheet URL
+        const SHEET_URL = 'YOUR_GOOGLE_SHEET_CSV_URL_HERE';
+        
+        // Sample data for demonstration
+        let ordersData = [
+            { orderNumber: 'ORD-001', shipped: 1, dateShipped: '2024-01-15' },
+            { orderNumber: 'ORD-002', shipped: 0, dateShipped: '' },
+            { orderNumber: 'ORD-003', shipped: 1, dateShipped: '2024-01-16' },
+            { orderNumber: 'ORD-004', shipped: 0, dateShipped: '' },
+            { orderNumber: 'ORD-005', shipped: 1, dateShipped: '2024-01-17' },
+            { orderNumber: 'ORD-006', shipped: 0, dateShipped: '' },
+            { orderNumber: 'ORD-007', shipped: 1, dateShipped: '2024-01-18' },
+            { orderNumber: 'ORD-008', shipped: 0, dateShipped: '' },
+            { orderNumber: 'ORD-009', shipped: 1, dateShipped: '2024-01-19' },
+            { orderNumber: 'ORD-010', shipped: 0, dateShipped: '' },
+        ];
+
+        function loadDataFromGoogleSheet() {
+            // When you have a real Google Sheet URL, uncomment this section:
+            /*
+            fetch(SHEET_URL)
+                .then(response => response.text())
+                .then(data => {
+                    ordersData = parseCSV(data);
+                    updateDashboard();
+                })
+                .catch(error => {
+                    console.error('Error loading data:', error);
+                    // Fall back to sample data
+                    updateDashboard();
+                });
+            */
+            
+            // For now, use sample data
+            updateDashboard();
+        }
+
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n');
+            const headers = lines[0].split(',');
+            const data = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim()) {
+                    const values = lines[i].split(',');
+                    data.push({
+                        orderNumber: values[0]?.trim(),
+                        shipped: parseInt(values[1]?.trim()) || 0,
+                        dateShipped: values[2]?.trim() || ''
+                    });
+                }
+            }
+            return data;
+        }
+
+        function updateDashboard() {
+            updateStats();
+            updateHeatmap();
+        }
+
+        function updateStats() {
+            const total = ordersData.length;
+            const shipped = ordersData.filter(order => order.shipped === 1).length;
+            const pending = total - shipped;
+            
+            // Find last shipped order
+            const shippedOrders = ordersData
+                .filter(order => order.shipped === 1 && order.dateShipped)
+                .sort((a, b) => new Date(b.dateShipped) - new Date(a.dateShipped));
+            
+            const lastShipped = shippedOrders.length > 0 ? shippedOrders[0].orderNumber : 'None';
+
+            document.getElementById('totalOrders').textContent = total;
+            document.getElementById('shippedOrders').textContent = shipped;
+            document.getElementById('pendingOrders').textContent = pending;
+            document.getElementById('lastShipped').textContent = lastShipped;
+        }
+
+        function updateHeatmap() {
+            const heatmap = document.getElementById('heatmap');
+            heatmap.innerHTML = '';
+
+            ordersData.forEach(order => {
+                const cell = document.createElement('div');
+                cell.className = `order-cell ${order.shipped === 1 ? 'shipped' : 'pending'}`;
+                cell.textContent = order.orderNumber.replace('ORD-', '');
+                cell.title = `${order.orderNumber} - ${order.shipped === 1 ? 'Shipped' : 'Pending'}`;
+                cell.onclick = () => showOrderDetails(order);
+                heatmap.appendChild(cell);
+            });
+        }
+
+        function searchOrder() {
+            const orderNumber = document.getElementById('orderInput').value.trim().toUpperCase();
+            const resultDiv = document.getElementById('searchResult');
+            
+            if (!orderNumber) {
+                resultDiv.innerHTML = '<div class="result not-found">Please enter an order number</div>';
+                return;
+            }
+
+            const order = ordersData.find(o => o.orderNumber.toUpperCase() === orderNumber);
+            
+            if (!order) {
+                resultDiv.innerHTML = '<div class="result not-found">❌ Order not found</div>';
+                return;
+            }
+
+            if (order.shipped === 1) {
+                resultDiv.innerHTML = `<div class="result shipped">✅ Order ${order.orderNumber} has been shipped! Date: ${order.dateShipped}</div>`;
+            } else {
+                resultDiv.innerHTML = `<div class="result pending">📦 Order ${order.orderNumber} is being prepared for shipment</div>`;
+            }
+        }
+
+        function showOrderDetails(order) {
+            const status = order.shipped === 1 ? 'Shipped' : 'Pending';
+            const date = order.dateShipped ? ` on ${order.dateShipped}` : '';
+            alert(`Order: ${order.orderNumber}\nStatus: ${status}${date}`);
+        }
+
+        // Allow Enter key to search
+        document.getElementById('orderInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchOrder();
+            }
+        });
+
+        // Initialize dashboard
+        loadDataFromGoogleSheet();
+    </script>
+</body>
+</html>
